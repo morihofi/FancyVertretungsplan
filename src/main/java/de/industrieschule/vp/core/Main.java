@@ -4,6 +4,7 @@ import de.industrieschule.vp.core.autodiscovery.EndpointClassDiscovery;
 import de.industrieschule.vp.core.config.Config;
 import de.industrieschule.vp.core.utilities.JWTTokenUtil;
 import de.industrieschule.vp.core.utilities.helper.AppDirectoryHelper;
+import de.industrieschule.vp.legacy.LegacyVertretungsplanEndpoint;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinGson;
@@ -88,6 +89,10 @@ public class Main {
                     context.status(204);
                     context.result();
                 })
+                .get("/App/json_transfer.php", new LegacyVertretungsplanEndpoint()) // Legacy App Endpoint
+                /*
+                 * Default API route
+                 */
                 .get("/" + Config.API_PREFIX_DIR, ctx -> ctx.result("API is ready"));
 
 
