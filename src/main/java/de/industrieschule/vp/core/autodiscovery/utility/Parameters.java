@@ -1,34 +1,33 @@
 package de.industrieschule.vp.core.autodiscovery.utility;
 
-import com.google.gson.Gson;
+import graphql.schema.DataFetchingEnvironment;
 import io.javalin.http.Context;
-import io.javalin.http.HandlerType;
+
+import java.sql.SQLException;
 
 public class Parameters {
 
-    private Context javalinContext;
+    private final Context javalinContext;
+    private final DataFetchingEnvironment graphQLDatafetchingEnvironment;
 
-    public String getUserAgent() {
-        return getJavalinContext().userAgent();
-    }
-
-    public String getRemoteIP() {
-        return getJavalinContext().ip();
-    }
+  /*  public UserSessionEntity getSession() throws SQLException {
+        return ValidateSessionToken.getSessionFromRequestAndValidate(javalinContext);
+    }*/
 
     public enum REQUEST_SOURCE {
-        REST
+        REST, GRAPH_QL
     }
 
     public enum REST_ARGUMENT_TYPE {
-        PATH, FORM, QUERY
+        PATH, QUERY
     }
 
 
-    public REQUEST_SOURCE source;
+    public final REQUEST_SOURCE source;
 
-    public Parameters(Context javalinContext, REQUEST_SOURCE source) {
+    public Parameters(Context javalinContext, DataFetchingEnvironment graphQLDatafetchingEnvironment, REQUEST_SOURCE source) {
         this.javalinContext = javalinContext;
+        this.graphQLDatafetchingEnvironment = graphQLDatafetchingEnvironment;
         this.source = source;
     }
 
@@ -48,18 +47,14 @@ public class Parameters {
     public <T> T getArgument(String paramName, Class<T> targetClass, REST_ARGUMENT_TYPE type) {
         Object value = null;
         switch (getSource()) {
-            case REST:
+            case REST -> {
                 if (type == REST_ARGUMENT_TYPE.QUERY) {
                     value = javalinContext.queryParam(paramName);
-                }
-                if (type == REST_ARGUMENT_TYPE.PATH) {
+                } else if (type == REST_ARGUMENT_TYPE.PATH) {
                     value = javalinContext.pathParam(paramName);
                 }
-                if (type == REST_ARGUMENT_TYPE.FORM) {
-                    value = javalinContext.formParam(paramName);
-                }
-                break;
-
+            }
+            case GRAPH_QL -> value = graphQLDatafetchingEnvironment.getArgument(paramName);
         }
 
         if (value == null) {
@@ -85,8 +80,6 @@ public class Parameters {
             return targetClass.cast(value.toString());
         } else if (targetClass == Float.class) {
             return targetClass.cast(Float.parseFloat(value.toString()));
-        } else if (targetClass == Long.class) {
-            return targetClass.cast(Long.parseLong(value.toString()));
         }
         // Weitere Typkonvertierungen können hier hinzugefügt werden
 
@@ -122,27 +115,23 @@ public class Parameters {
     }
 
     /**
+     * Returns the GraphQL Data-fetching environment
+     * <p>
+     * <b>Please note, that this method only returns a value, when {@link #getSource()}'s value returns GRAPH_QL</b>
+     * </p>
+     *
+     * @return Javalin Context
+     */
+    public DataFetchingEnvironment getGraphQLDatafetchingEnvironment() {
+        return graphQLDatafetchingEnvironment;
+    }
+
+    /**
      * Gets the source of this request, so from which interface the request comes.
      *
      * @return Request source
      */
     public REQUEST_SOURCE getSource() {
         return source;
-    }
-
-
-    public <T> T getRequestBodyAs(Class<T> targetClass) {
-        if (getJavalinContext().method() == HandlerType.PATCH ||
-                getJavalinContext().method() == HandlerType.POST ||
-                getJavalinContext().method() == HandlerType.PUT
-        ) {
-            Gson gson = new Gson();
-            return gson.fromJson(getJavalinContext().body(), targetClass);
-
-        } else {
-            throw new IllegalArgumentException("Unable to transform body: Only HTTP Methods POST, PUT and PATCH are allowed");
-        }
-
-
     }
 }

@@ -6,7 +6,7 @@ package de.industrieschule.vp.core.autodiscovery.templates;
  * Subclasses of this class should implement the {@link #onClassLoad()} method to define the behavior
  * to be executed after the discovery of all classes with the {@link de.industrieschule.vp.autodiscovery.annotations.AutoloadClass} annotation.
  *
- * @author MHO
+ * @author Moritz Hofmann
  */
 public abstract class AutoloadClassTemplate {
 

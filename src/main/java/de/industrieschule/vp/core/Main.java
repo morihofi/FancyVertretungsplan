@@ -5,6 +5,8 @@ import de.industrieschule.vp.core.config.Config;
 import de.industrieschule.vp.core.utilities.JWTTokenUtil;
 import de.industrieschule.vp.core.utilities.helper.AppDirectoryHelper;
 import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import io.javalin.json.JavalinGson;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,11 @@ import java.nio.file.Paths;
 import java.security.Security;
 import java.util.Objects;
 
-
+/**
+ * Main entrypoint
+ *
+ * @author Moritz Hofmann
+ */
 public class Main {
 
     private static Javalin app;
@@ -43,12 +49,13 @@ public class Main {
 
 
     public static void main(String[] args) throws Exception {
-        LOG.info("Starting Vertretungsplan ...");
+        LOG.info("Starting Vertretungsplan Suite...");
         LOG.info("\n ___ ____   ____   __     ______  \n" +
                 "|_ _/ ___| / ___|  \\ \\   / /  _ \\ \n" +
                 " | |\\___ \\| |   ____\\ \\ / /| |_) |\n" +
                 " | | ___) | |__|_____\\ V / |  __/ \n" +
-                "|___|____/ \\____|     \\_/  |_|    \n");
+                "|___|____/ \\____|     \\_/  |_|    \n" +
+                "Vertretungsplan Suite - Alpha Version\n");
 
         // Register Bouncy Castle Provider
         LOG.info("Register Bouncy Castle Security Provider");
@@ -59,6 +66,10 @@ public class Main {
 
         app = Javalin.create(javalinConfig -> {
                     javalinConfig.showJavalinBanner = false;
+                    // Static Files
+                    javalinConfig.staticFiles.add("/webstatic", Location.CLASSPATH);
+                    // Object Mapper
+                    javalinConfig.jsonMapper(new JavalinGson());
                 })
                 .before(context -> {
                     //Content-Type

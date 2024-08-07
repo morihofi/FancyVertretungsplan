@@ -45,13 +45,13 @@ public class RESTDispatcher implements Handler {
         Gson gson = new Gson();
 
         // Create Parameters for processing the REST request
-        Parameters params = new Parameters(ctx, Parameters.REQUEST_SOURCE.REST);
+        Parameters params = new Parameters(ctx, null, Parameters.REQUEST_SOURCE.REST);
 
         // Run the EndpointInstance to process the request and return the result as JSON
 
         Object instanceResponse = null;
         try {
-            log.debug("Handler class " + restEndpointInstance.getClass().getName() + " called");
+            log.debug("Handler class {} called", restEndpointInstance.getClass().getName());
             instanceResponse = restEndpointInstance.handleRequest(params);
         } catch (Exception e) {
             log.error("Exception was thrown during handling in RESTEndpointInstance", e);
@@ -80,11 +80,11 @@ public class RESTDispatcher implements Handler {
         }
 
         if(instanceResponse != null){
-            log.debug("Serializing response of type " + instanceResponse.getClass().getName());
-            ctx.result(gson.toJson(instanceResponse));
+            log.debug("Serializing response of type {}", instanceResponse.getClass().getName());
+            ctx.json(instanceResponse);
         }else {
             //If response of our handler is null, return an HTTP 204 (No Content)
-            log.debug("Response of handler " + restEndpointInstance.getClass().getName() + " is null, so set 204 (No Content) HTTP header");
+            log.debug("Response of handler {} is null, so set 204 (No Content) HTTP header", restEndpointInstance.getClass().getName());
             ctx.status(204);
         }
     }

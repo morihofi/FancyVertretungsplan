@@ -16,9 +16,9 @@ type Query {
 
     ######### HANDLER BEGIN HERE #########
 
-    #### HELLO PLUGIN
+    #### HELLO HANDLER
 
-    # Sample Hello World Function, provided by "hello"-plugin
+    # Sample Hello World Function, provided by "hello"-handler
     hello(name: String!): String!
 
 }
@@ -26,8 +26,6 @@ type Query {
 
 # Mutation Type
 type Mutation {
-
+    # Pet an animal
+    petAnimal: String!
 }
-
-
-

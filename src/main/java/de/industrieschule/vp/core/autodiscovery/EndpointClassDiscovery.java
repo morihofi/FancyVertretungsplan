@@ -1,13 +1,17 @@
 package de.industrieschule.vp.core.autodiscovery;
 
-import de.industrieschule.vp.core.autodiscovery.annotations.AutoloadClass;
-import de.industrieschule.vp.core.autodiscovery.annotations.RESTEndpoint;
-import de.industrieschule.vp.core.autodiscovery.annotations.WebSocketEndpoint;
+import de.industrieschule.vp.core.autodiscovery.annotations.*;
+import de.industrieschule.vp.core.autodiscovery.templates.MultiEndpointTemplate;
+import de.industrieschule.vp.core.autodiscovery.dispatcher.GraphQLDispatcher;
 import de.industrieschule.vp.core.autodiscovery.dispatcher.RESTDispatcher;
 import de.industrieschule.vp.core.autodiscovery.templates.AutoloadClassTemplate;
 import de.industrieschule.vp.core.autodiscovery.templates.RESTEndpointTemplate;
 import de.industrieschule.vp.core.autodiscovery.templates.WebSocketEndpointTemplate;
 import de.industrieschule.vp.core.config.Config;
+import graphql.schema.DataFetcher;
+import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
 import io.javalin.http.HandlerType;
@@ -16,10 +20,14 @@ import javassist.NotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * A utility class for loading and registering plugins in the application.
@@ -59,6 +67,8 @@ public class EndpointClassDiscovery {
         Reflections reflections = new Reflections(packagePrefix);
 
         loadAndRegisterRESTandWebSocketPlugins(pathPrefix, reflections, javalin);
+        loadAndRegisterGraphQLPlugins(pathPrefix, reflections, javalin);
+
     }
 
     /**
@@ -89,6 +99,93 @@ public class EndpointClassDiscovery {
         return pathPrefix + versionPrefix + path;
     }
 
+    static void loadAndRegisterGraphQLPlugins(String pathPrefix, Reflections reflections, Javalin javalin) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
+        Set<Class<?>> apiPluginEndpointClasses = reflections.getTypesAnnotatedWith(GraphQLQuery.class);
+        Set<Class<?>> apiPluginMultiClasses = reflections.getTypesAnnotatedWith(MultiEndpoint.class);
+
+        Map<String, DataFetcher> queryDataFetchers = new HashMap<>();
+        Map<String, DataFetcher> mutationDataFetchers = new HashMap<>();
+
+        for (Class<?> clazz : apiPluginEndpointClasses) {
+            String fieldName = clazz.getAnnotation(GraphQLQuery.class).fieldName();
+            GraphQLEndpoint.GRAPHQL_FIELD_TYPE fieldType = clazz.getAnnotation(GraphQLQuery.class).graphQLFieldType();
+
+
+            // Finde den passenden Konstruktor
+            java.lang.reflect.Constructor<?> constructor = clazz.getDeclaredConstructor();
+
+            // Erstelle eine neue Instanz der Klasse mit den gegebenen Parametern (Constructor wird auto. aufgerufen)
+            DataFetcher<?> instance = (DataFetcher<?>) constructor.newInstance();
+
+            if (fieldType == GraphQLEndpoint.GRAPHQL_FIELD_TYPE.QUERY) {
+                queryDataFetchers.put(fieldName, instance);
+            } else if (fieldType == GraphQLEndpoint.GRAPHQL_FIELD_TYPE.MUTATION) {
+                mutationDataFetchers.put(fieldName, instance);
+            }
+
+            log.info("\uD83D\uDD0C GraphQL DataFetcher-Plugin (" + fieldType.name() + ") class " + clazz.getName() + " registered on field \"" + fieldName + "\"");
+        }
+
+        for (Class<?> clazz : apiPluginMultiClasses) {
+            String fieldName = clazz.getAnnotation(MultiEndpoint.class).graphQLFieldName();
+            GraphQLEndpoint.GRAPHQL_FIELD_TYPE fieldType = clazz.getAnnotation(MultiEndpoint.class).graphQLFieldType();
+
+
+            // Finde den passenden Konstruktor
+            Constructor<?> constructor = clazz.getDeclaredConstructor();
+
+            // Erstelle eine neue Instanz der Klasse mit den gegebenen Parametern (Constructor wird auto. aufgerufen)
+            MultiEndpointTemplate<?> instance = (MultiEndpointTemplate<?>) constructor.newInstance();
+
+
+            if (fieldType == GraphQLEndpoint.GRAPHQL_FIELD_TYPE.QUERY) {
+                queryDataFetchers.put(fieldName, new GraphQLDispatcher(instance));
+            } else if (fieldType == GraphQLEndpoint.GRAPHQL_FIELD_TYPE.MUTATION) {
+                mutationDataFetchers.put(fieldName, new GraphQLDispatcher(instance));
+            }
+
+
+            log.info("\uD83D\uDD0C Multi-Plugin class " + clazz.getName() + " registered on " + fieldType.name() + " GraphQL query field \"" + fieldName + "\"");
+        }
+
+
+        RuntimeWiring graphQLWiring = RuntimeWiring.newRuntimeWiring()
+                .type("Query", typeWiring -> {
+                    for (Map.Entry<String, DataFetcher> entry : queryDataFetchers.entrySet()) {
+                        typeWiring.dataFetcher(entry.getKey(), entry.getValue());
+                    }
+                    return typeWiring;
+                })
+                .type("Mutation", typeWiring -> {
+                    for (Map.Entry<String, DataFetcher> entry : mutationDataFetchers.entrySet()) {
+                        typeWiring.dataFetcher(entry.getKey(), entry.getValue());
+                    }
+                    return typeWiring;
+                })
+                .build();
+
+        log.info("\uD83D\uDD0E Scanning classpath for GraphQL (*.graphql) schemas...");
+
+        // Erstellen Sie ein Reflections-Objekt mit einem ResourcesScanner
+        Reflections reflectionsScanner = new Reflections("graphql", Scanners.Resources);
+        // Suchen Sie nach allen Dateien, die mit .graphql enden
+        Set<String> graphQLFiles = reflectionsScanner.getResources(Pattern.compile(".*\\.graphql"));
+
+        TypeDefinitionRegistry mergedRegistry = new TypeDefinitionRegistry();
+        for (String graphQLFile : graphQLFiles) {
+            String schema = new Scanner(Objects.requireNonNull(EndpointClassDiscovery.class.getResourceAsStream("/" + graphQLFile)), StandardCharsets.UTF_8).useDelimiter("\\A").next();
+            TypeDefinitionRegistry parsedSchema = new SchemaParser().parse(schema);
+
+            //Add to merged schemas
+            mergedRegistry.merge(parsedSchema);
+
+            log.info("\uD83D\uDCC3 GraphQL schema at /" + graphQLFile + " merged");
+        }
+        log.info("\u27A1\uFE0F Register GraphQL on " + pathPrefix + "/graphql");
+        javalin.addEndpoint(new Endpoint(HandlerType.POST, pathPrefix + "/graphql", new GraphQLEndpoint(mergedRegistry, graphQLWiring)));
+
+    }
 
 
     static void loadAndRegisterRESTandWebSocketPlugins(String pathPrefix, Reflections reflections, Javalin javalin) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassDiscoveryException {
@@ -96,6 +193,8 @@ public class EndpointClassDiscovery {
         Set<Class<?>> RESTEndpointClasses = reflections.getTypesAnnotatedWith(RESTEndpoint.class);
         Set<Class<?>> WebSocketEndpointClasses = reflections.getTypesAnnotatedWith(WebSocketEndpoint.class);
         Set<Class<?>> AutoloadClasses = reflections.getTypesAnnotatedWith(AutoloadClass.class);
+        Set<Class<?>> MultiEndpointClasses = reflections.getTypesAnnotatedWith(MultiEndpoint.class);
+
 
         for (Class<?> clazz : AutoloadClasses) {
 
@@ -159,7 +258,38 @@ public class EndpointClassDiscovery {
         }
 
 
+        // Durchlaufe alle gefundenen Klassen
+        for (Class<?> clazz : MultiEndpointClasses) {
 
+            // Finde den passenden Konstruktor
+            java.lang.reflect.Constructor<?> constructor = clazz.getDeclaredConstructor();
+
+            // Erstelle eine neue Instanz der Klasse mit den gegebenen Parametern (Constructor wird auto. aufgerufen)
+            MultiEndpointTemplate multiEndpointInstance = (MultiEndpointTemplate) constructor.newInstance();
+
+            HandlerType[] types = clazz.getAnnotation(MultiEndpoint.class).restType();
+            String path = clazz.getAnnotation(MultiEndpoint.class).restPath();
+            String[] apiVersions = clazz.getAnnotation(MultiEndpoint.class).restVersionPrefix();
+            boolean debugOnly = clazz.getAnnotation(MultiEndpoint.class).debugOnly();
+
+            if (debugOnly && !Config.DEBUG) {
+                //Production mode, don't enable plugins that should only run in debug mode
+                continue;
+            }
+
+            validatePath(path);
+
+            for (String apiVersion : apiVersions) {
+
+                path = constructPath(pathPrefix,apiVersion, path);
+
+                for (HandlerType type : types) {
+                    javalin.addEndpoint(new Endpoint(type, path, new RESTDispatcher(multiEndpointInstance)));
+                    log.info("\uD83D\uDD0C Multi-Plugin class {} loaded as REST, listening on {} {}", clazz.getName(), type, path);
+                }
+            }
+
+        }
 
         // Durchlaufe alle gefundenen Klassen
         for (Class<?> clazz : WebSocketEndpointClasses) {

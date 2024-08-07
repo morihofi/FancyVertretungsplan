@@ -6,10 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
+import org.hibernate.cfg.*;
 import org.reflections.Reflections;
 
+/**
+ * Database access
+ *
+ * @author Moritz Hofmann
+ */
 public class HibernateUtil {
     private static SessionFactory sessionFactory;
 
@@ -59,7 +63,7 @@ public class HibernateUtil {
     }
 
     /**
-     * Retrieves a {@link Configuration} object configured for a specific {@link DatabaseType}. This
+     * Retrieves a {@link Configuration} object configured. This
      * method configures the database connection properties based on the type of database specified
      * by {@code dbType}. It sets properties such as the JDBC driver, connection URL, dialect, as well
      * as user credentials and additional Hibernate settings.
@@ -94,17 +98,17 @@ public class HibernateUtil {
         }
 
         log.info("Configuring JDBC URL and login credentials");
-        configuration.setProperty(Environment.JAKARTA_JDBC_URL, Config.DB_JDBC);
-        configuration.setProperty(Environment.JAKARTA_JDBC_USER, Config.DB_USERNAME);
-        configuration.setProperty(Environment.JAKARTA_JDBC_PASSWORD, Config.DB_PASSWORD);
+        configuration.setProperty(JdbcSettings.JAKARTA_JDBC_URL, Config.DB_JDBC);
+        configuration.setProperty(JdbcSettings.JAKARTA_JDBC_USER, Config.DB_USERNAME);
+        configuration.setProperty(JdbcSettings.JAKARTA_JDBC_PASSWORD, Config.DB_PASSWORD);
 
         if (Config.DEBUG) {
             //Show verbose SQL only on debug
-            configuration.setProperty(Environment.SHOW_SQL, "true");
+            configuration.setProperty(JdbcSettings.SHOW_SQL, "true");
         }
-        configuration.setProperty(Environment.HBM2DDL_AUTO, "update");
+        configuration.setProperty(SchemaToolingSettings.HBM2DDL_AUTO, "update");
 
-        configuration.setProperty(Environment.ENABLE_LAZY_LOAD_NO_TRANS, "true");
+        configuration.setProperty(TransactionSettings.ENABLE_LAZY_LOAD_NO_TRANS, "true");
         return configuration;
     }
 
