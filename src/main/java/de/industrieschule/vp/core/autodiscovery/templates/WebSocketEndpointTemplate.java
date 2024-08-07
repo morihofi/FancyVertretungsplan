@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery.templates;
+package de.industrieschule.vp.core.autodiscovery.templates;
 
 import io.javalin.websocket.*;
 

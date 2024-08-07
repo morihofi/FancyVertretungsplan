@@ -1,13 +1,13 @@
-package de.industrieschule.vp.autodiscovery;
+package de.industrieschule.vp.core.autodiscovery;
 
-import de.industrieschule.vp.autodiscovery.annotations.AutoloadClass;
-import de.industrieschule.vp.autodiscovery.annotations.RESTEndpoint;
-import de.industrieschule.vp.autodiscovery.annotations.WebSocketEndpoint;
-import de.industrieschule.vp.autodiscovery.dispatcher.RESTDispatcher;
-import de.industrieschule.vp.autodiscovery.templates.AutoloadClassTemplate;
-import de.industrieschule.vp.autodiscovery.templates.RESTEndpointTemplate;
-import de.industrieschule.vp.autodiscovery.templates.WebSocketEndpointTemplate;
-import de.industrieschule.vp.config.Config;
+import de.industrieschule.vp.core.autodiscovery.annotations.AutoloadClass;
+import de.industrieschule.vp.core.autodiscovery.annotations.RESTEndpoint;
+import de.industrieschule.vp.core.autodiscovery.annotations.WebSocketEndpoint;
+import de.industrieschule.vp.core.autodiscovery.dispatcher.RESTDispatcher;
+import de.industrieschule.vp.core.autodiscovery.templates.AutoloadClassTemplate;
+import de.industrieschule.vp.core.autodiscovery.templates.RESTEndpointTemplate;
+import de.industrieschule.vp.core.autodiscovery.templates.WebSocketEndpointTemplate;
+import de.industrieschule.vp.core.config.Config;
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
 import io.javalin.http.HandlerType;
@@ -36,7 +36,7 @@ public class EndpointClassDiscovery {
     /**
      * The common package prefix used for scanning plugin classes.
      */
-    public static final String packagePrefix = "de.morihofi.infrastructure.mosnet.components.";
+    public static final String packagePrefix = "de.industrieschule.vp.handler";
 
     /**
      * Loads and registers REST, WebSocket, and GraphQL plugins based on annotations and configuration.
@@ -68,7 +68,7 @@ public class EndpointClassDiscovery {
      * @throws ClassDiscoveryException If the API path is invalid.
      */
     private static void validatePath(String path) throws ClassDiscoveryException {
-        if (path.length() == 0) {
+        if (path.isEmpty()) {
             throw new ClassDiscoveryException("API Path cannot be empty");
         }
         if (!path.startsWith("/")) {

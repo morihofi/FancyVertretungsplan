@@ -1,4 +1,4 @@
-package de.industrieschule.vp.responseTempates;
+package de.industrieschule.vp.core.responseTempates;
 
 public class SimpleStatusResponse {
     private String message;

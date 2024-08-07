@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery.annotations;
+package de.industrieschule.vp.core.autodiscovery.annotations;
 
 
 import io.javalin.http.HandlerType;

@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery.utility;
+package de.industrieschule.vp.core.autodiscovery.utility;
 
 import com.google.gson.Gson;
 import io.javalin.http.Context;

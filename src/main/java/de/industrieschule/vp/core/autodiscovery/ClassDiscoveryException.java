@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery;
+package de.industrieschule.vp.core.autodiscovery;
 
 /**
  * An exception class representing an error that occurs during the loading and registration of plugins.

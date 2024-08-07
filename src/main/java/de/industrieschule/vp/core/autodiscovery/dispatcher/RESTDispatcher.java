@@ -1,10 +1,10 @@
-package de.industrieschule.vp.autodiscovery.dispatcher;
+package de.industrieschule.vp.core.autodiscovery.dispatcher;
 
 
 import com.google.gson.Gson;
-import de.industrieschule.vp.autodiscovery.templates.RESTEndpointTemplate;
-import de.industrieschule.vp.autodiscovery.utility.Parameters;
-import de.industrieschule.vp.config.Config;
+import de.industrieschule.vp.core.autodiscovery.templates.RESTEndpointTemplate;
+import de.industrieschule.vp.core.autodiscovery.utility.Parameters;
+import de.industrieschule.vp.core.config.Config;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.apache.logging.log4j.LogManager;

@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery.annotations;
+package de.industrieschule.vp.core.autodiscovery.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

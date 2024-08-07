@@ -1,0 +1,33 @@
+# Main schema definition
+#
+# Define all your queries here, specify your types a "yourPluginNameHere.graphql" file,
+# located in the "handler" directory.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+# Query Type
+type Query {
+
+    ######### CORE FUNCTIONALITY BEGIN HERE #########
+
+
+    ######### HANDLER BEGIN HERE #########
+
+    #### HELLO PLUGIN
+
+    # Sample Hello World Function, provided by "hello"-plugin
+    hello(name: String!): String!
+
+}
+
+
+# Mutation Type
+type Mutation {
+
+}
+
+
+

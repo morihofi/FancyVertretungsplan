@@ -1,14 +1,22 @@
 package de.industrieschule.vp.core;
 
-import de.industrieschule.vp.autodiscovery.EndpointClassDiscovery;
+import de.industrieschule.vp.core.autodiscovery.EndpointClassDiscovery;
+import de.industrieschule.vp.core.config.Config;
 import de.industrieschule.vp.core.utilities.JWTTokenUtil;
+import de.industrieschule.vp.core.utilities.helper.AppDirectoryHelper;
 import io.javalin.Javalin;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.lang.invoke.MethodHandles;
-import java.security.Security;
 
-import de.industrieschule.vp.config.Config;
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Security;
+import java.util.Objects;
+
 
 public class Main {
 
@@ -18,6 +26,21 @@ public class Main {
      * Logger
      */
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    /**
+     * `serverdata` directory as an absolute path
+     */
+    public static final Path FILES_DIR =
+            Paths.get(Objects.requireNonNull(AppDirectoryHelper.getAppDirectory())).resolve("serverdata").toAbsolutePath();
+
+    public static Path resolveDataDir() throws IOException {
+        if (!Files.exists(FILES_DIR)) {
+            Files.createDirectories(FILES_DIR);
+        }
+
+        return FILES_DIR;
+    }
+
 
     public static void main(String[] args) throws Exception {
         LOG.info("Starting Vertretungsplan ...");
@@ -31,7 +54,8 @@ public class Main {
         LOG.info("Register Bouncy Castle Security Provider");
         Security.addProvider(new BouncyCastleProvider());
 
-
+        LOG.info("Initializing Database ...");
+        HibernateUtil.initDatabase();
 
         app = Javalin.create(javalinConfig -> {
                     javalinConfig.showJavalinBanner = false;
@@ -59,7 +83,7 @@ public class Main {
         LOG.info("Initializing JWT keys...");
         JWTTokenUtil.initialize();
 
-        LOG.info("Discovering endpoint classes...");
+        LOG.info("Discovering API-Endpoint classes...");
         EndpointClassDiscovery.discoverAndLoadClasses(app, Config.API_PREFIX_DIR);
 
         LOG.info("\uD83D\uDE80 Initialization complete, starting API");

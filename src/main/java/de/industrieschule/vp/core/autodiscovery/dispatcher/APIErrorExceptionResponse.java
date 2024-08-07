@@ -1,4 +1,4 @@
-package de.industrieschule.vp.autodiscovery.dispatcher;
+package de.industrieschule.vp.core.autodiscovery.dispatcher;
 
 public class APIErrorExceptionResponse {
     private String message;

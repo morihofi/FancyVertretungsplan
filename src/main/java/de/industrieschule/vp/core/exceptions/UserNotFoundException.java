@@ -1,4 +1,4 @@
-package de.industrieschule.vp.exceptions;
+package de.industrieschule.vp.core.exceptions;
 
 public class UserNotFoundException  extends Exception {
 

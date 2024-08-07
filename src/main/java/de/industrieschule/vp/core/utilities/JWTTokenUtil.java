@@ -5,12 +5,14 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import de.industrieschule.vp.core.Main;
 import de.industrieschule.vp.core.utilities.helper.KeyStorage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import de.industrieschule.vp.core.config.Config;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +33,7 @@ public class JWTTokenUtil {
     public static ECPublicKey jwtPublicKey = null;
     private static Algorithm jwtAlgorithm;
 
-    public static void initialize() throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+    public static void initialize() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException {
         log.info("Register BouncyCastle Cryptographic Provider");
         Security.addProvider(new BouncyCastleProvider());
 
