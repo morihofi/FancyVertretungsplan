@@ -41,3 +41,4 @@ build/
 docker-compose.yml
 *.db
 *.log
+.idea/sonarlint
