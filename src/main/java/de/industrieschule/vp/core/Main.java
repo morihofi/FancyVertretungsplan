@@ -88,12 +88,16 @@ public class Main {
                      */
                     context.status(204);
                     context.result();
-                })
-                .get("/App/json_transfer.php", new LegacyVertretungsplanEndpoint()) // Legacy App Endpoint
-                /*
+                })/*
                  * Default API route
                  */
                 .get("/" + Config.API_PREFIX_DIR, ctx -> ctx.result("API is ready"));
+
+                if(Config.API_LEGACYAPP_ENABLE){
+                    app.get("/App/json_transfer.php", new LegacyVertretungsplanEndpoint()); // Legacy App Endpoint
+                }
+
+
 
 
         LOG.info("Initializing JWT keys...");

@@ -25,6 +25,7 @@ public class Config {
     public static final String DB_USERNAME = dotenv.get("DB_USERNAME");
     public static final String DB_PASSWORD = dotenv.get("DB_PASSWORD");
     public static final Integer API_PORT = Integer.valueOf(dotenv.get("API_PORT"));
+    public static final boolean API_LEGACYAPP_ENABLE = Boolean.parseBoolean(dotenv.get("API_LEGACYAPP_ENABLE"));
     public static final boolean DEBUG = Boolean.parseBoolean(dotenv.get("DEBUG"));
     public static final String JWT_ISSUER = dotenv.get("JWT_ISSUER");
 }
