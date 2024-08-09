@@ -16,6 +16,7 @@ import io.javalin.http.HandlerType;
 public class PetAnimalMultiEndpoint extends MultiEndpointTemplate<String> {
     @Override
     public String handleRequest(Parameters params) throws Exception {
+        params.
         return "purr purr ~ The animal likes this";
     }
 }
